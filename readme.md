@@ -1,7 +1,9 @@
 # LoMo App
 
 ## Overview
-The LoMo App is developed by Nicholas Case at WyGISC, School of Computing, University of Wyoming. This application demonstrates how to utilize the ArcGIS API for JavaScript to display raster data from a Cloud Optimized GeoTIFF (COG) alongside a GeoJSON layer representing river data. The app includes various UI enhancements using Bootstrap and Bootswatch to provide a clean and responsive user experience.
+The LoMo App is developed by Nicholas Case at WyGISC, School of Computing, University of Wyoming. A published version can be viewed here: https://pathfinder.arcc.uwyo.edu/tncwebsite/LoMoData/LoMoApp/index.html.
+
+This application demonstrates how to utilize the ArcGIS API for JavaScript to display raster data from a Cloud Optimized GeoTIFF (COG) alongside a GeoJSON layer representing river data. The app includes various UI enhancements using Bootstrap and Bootswatch to provide a clean and responsive user experience.
 
 ## Setting Up Your Development Environment
 
