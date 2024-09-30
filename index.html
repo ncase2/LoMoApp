@@ -79,27 +79,31 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col">
-                    <!-- Map container where the ArcGIS map will render -->
-                    <div id="viewDiv" style="height:600px" class="mb-3"></div>
+                <div class="col-md-9 mb-3">
+                    <div class="card shadow-sm">
+                        <!-- Map container where the ArcGIS map will render -->
+                        <div id="viewDiv" style="height:600px"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-auto">
-                    <div class="container">
-                        <div class="card">
-                            <div class="card-body">
-                                <!-- Dropdown for selecting raster bands -->
-                                <div class="form-group">
-                                    <label for="band-select" class="form-label">Choose a band:</label>
-                                    <select id="band-select" class="form-control">
-                                        <option value="1">Band 1</option>
-                                        <option value="2">Band 2</option>
-                                        <option value="3">Band 3</option>
-                                        <option value="4">Band 4</option>
-                                        <option value="5">Band 5</option>
-                                        <option value="6">Band 6</option>
-                                    </select>
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col">
+                                    <!-- Dropdown for selecting raster bands -->
+                                    <div class="form-group mb-3">
+                                        <label for="band-select" class="form-label">Choose a band:</label>
+                                        <select id="band-select" class="form-control">
+                                            <option value="1">Band 1</option>
+                                            <option value="2">Band 2</option>
+                                            <option value="3">Band 3</option>
+                                            <option value="4">Band 4</option>
+                                            <option value="5">Band 5</option>
+                                            <option value="6">Band 6</option>
+                                        </select>
+                                    </div>
+                                    <!-- Container for the legend -->
+                                    <div id="legendDiv"></div>
                                 </div>
                             </div>
                         </div>
@@ -130,15 +134,15 @@
         async function initializeMap() {
             // Dynamically load ESRI modules needed for the application
             const [Map, MapView, ImageryTileLayer, ClassBreaksRenderer, SimpleFillSymbol, Color, GeoJSONLayer] = await loadEsriModules([
-                    "esri/Map",
-                    "esri/views/MapView",
-                    "esri/layers/ImageryTileLayer",
-                    "esri/renderers/ClassBreaksRenderer",
-                    "esri/symbols/SimpleFillSymbol",
-                    "esri/Color",
-                    "esri/layers/GeoJSONLayer",
-   
-                ]);
+                "esri/Map",
+                "esri/views/MapView",
+                "esri/layers/ImageryTileLayer",
+                "esri/renderers/ClassBreaksRenderer",
+                "esri/symbols/SimpleFillSymbol",
+                "esri/Color",
+                "esri/layers/GeoJSONLayer",
+
+            ]);
 
             // Create a new Map object with a vector basemap
             const map = new Map({
@@ -281,6 +285,7 @@
                 // Initialize the Legend
                 window.legend = new Legend({
                     view: view,
+                    container: document.getElementById("legendDiv"), // Set the legend's container to the div in the HTML
                     layerInfos: [{
                         layer: rasterLayer,
                         title: "Raster Layer" // Optionally customize the title
@@ -298,7 +303,6 @@
                     position: "bottom-left"
                 });
                 // Add the legend to the view
-                view.ui.add(legend, "bottom-right"); // You can specify other positions like "top-right", "top-left", etc.
 
                 const compassWidget = new Compass({
                     view: view
