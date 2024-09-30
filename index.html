@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light" class="h-100">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoMo App</title>
+    <!-- Load Bootstrap Icons CSS for UI icons -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
+        integrity="sha512-dPXYcDub/aeb08c63jRq/k6GaKccl256JQy/AnOq7CAnEZ9FzSL9wSbcZkMp4R26vBsMLFYH4kQ67/bbV8XaCQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Bootstrap CSS for responsive design and pre-defined styles -->
+    <link href="scripts/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Inline style to ensure the map viewDiv takes full height and width -->
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <!-- ArcGIS API CSS, default set to light theme -->
+    <link id="arcgis-css" rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+</head>
+
+<body style="padding-top: 120px;" class="d-flex flex-column h-100">
+    <!-- Navbar for application, includes theme toggle functionality -->
+    <div class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark">
+        <div class="container">
+            <a href="../" class="navbar-brand">LoMo App</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ms-md-auto">
+                    <li class="nav-item dropdown" data-bs-theme="light">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="theme-menu"
+                            aria-expanded="false" data-bs-toggle="dropdown" data-bs-display="static"
+                            aria-label="Toggle theme">
+                            <i class="bi bi-circle-half"></i>
+                            <span class="d-lg-none ms-2">Toggle theme</span>
+                        </a>
+                        <!-- Dropdown for theme selection -->
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="light" aria-pressed="false">
+                                    <i class="bi bi-sun-fill"></i><span class="ms-2">Light</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center"
+                                    data-bs-theme-value="dark" aria-pressed="true">
+                                    <i class="bi bi-moon-stars-fill"></i><span class="ms-2">Dark</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container d-flex flex-column h-100">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-lg-8 col-md-7 col-sm-6">
+                    <h1>LoMo App</h1>
+                    <p class="lead">Show COGs containing the results of processing various metrics.</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <!-- Map container where the ArcGIS map will render -->
+                    <div id="viewDiv" style="height:600px" class="mb-3"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-auto">
+                    <div class="container">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Dropdown for selecting raster bands -->
+                                <div class="form-group">
+                                    <label for="band-select" class="form-label">Choose a band:</label>
+                                    <select id="band-select" class="form-control">
+                                        <option value="1">Band 1</option>
+                                        <option value="2">Band 2</option>
+                                        <option value="3">Band 3</option>
+                                        <option value="4">Band 4</option>
+                                        <option value="5">Band 5</option>
+                                        <option value="6">Band 6</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer id="footer" class="footer mt-auto py-3">
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>Made by <a href="https://uwyo.edu/wygisc">WyGISC</a>.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <!-- Bootstrap Bundle JS for interactive components like dropdowns and modals -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <!-- ArcGIS API for JavaScript -->
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <!-- Application-specific JavaScript -->
+    <script async type="module">
+        // Asynchronously load required ESRI modules from the ArcGIS API
+        async function initializeMap() {
+            // Dynamically load ESRI modules needed for the application
+            const [Map, MapView, ImageryTileLayer, ClassBreaksRenderer, SimpleFillSymbol, Color, GeoJSONLayer] = await loadEsriModules([
+                    "esri/Map",
+                    "esri/views/MapView",
+                    "esri/layers/ImageryTileLayer",
+                    "esri/renderers/ClassBreaksRenderer",
+                    "esri/symbols/SimpleFillSymbol",
+                    "esri/Color",
+                    "esri/layers/GeoJSONLayer",
+   
+                ]);
+
+            // Create a new Map object with a vector basemap
+            const map = new Map({
+                basemap: "topo-vector"
+            });
+
+            // Define maximum values for raster data bands
+            const maxValues = [331200, 1810323, 100, 100, 1810323, 1810323];
+
+            // Initialize the raster layer with the first band and its max value
+            var rasterLayer = await makeTileLayer(0, maxValues[0], ImageryTileLayer, ClassBreaksRenderer, SimpleFillSymbol, Color);
+            map.add(rasterLayer); // Add raster layer to the map
+
+            // Load and add the GeoJSON layer for the river centerline to the map
+            var featureLayer = await loadGeoJSONLayer(GeoJSONLayer);
+            map.add(featureLayer);
+            // Configure the MapView with initial settings, including disabling snap-to-zoom
+            window.view = new MapView({
+                map: map,
+                center: [-95.850299, 40.864116], // Center of the map view
+                zoom: 8, // Initial zoom level
+                container: "viewDiv", // HTML container for the map
+                constraints: {
+                    snapToZoom: false
+                }
+            });
+            initializeWidgets();
+
+
+
+            // Add an event listener to the band selection dropdown to update the raster layer on change
+            document.getElementById('band-select').addEventListener('change', async function () {
+                const selectedBand = parseInt(this.value) - 1;
+                map.remove(rasterLayer);  // Remove the current raster layer
+                rasterLayer = await makeTileLayer(selectedBand, maxValues[selectedBand], ImageryTileLayer, ClassBreaksRenderer, SimpleFillSymbol, Color);
+                map.add(rasterLayer);  // Add the updated raster layer
+
+                // Reorder layers to ensure the river layer stays on top
+                map.layers.reorder(featureLayer, map.layers.length - 1);
+
+                // Update the legend for the new layer
+                updateLegend(rasterLayer);
+            });
+            // Function to create a new tile layer with class breaks for color rendering
+            async function makeTileLayer(bandId, maxVal, ImageryTileLayer, ClassBreaksRenderer, SimpleFillSymbol, Color) {
+                // Define how to visually represent different data ranges in the raster
+                const renderer = new ClassBreaksRenderer({
+                    field: "Value",  // Field to base class breaks on
+                    defaultSymbol: new SimpleFillSymbol({
+                        color: new Color([255, 255, 255, 1]), // Default color for out of range values
+                        style: "solid"
+                    }),
+                    minDataValue: 0,
+                    maxDataValue: maxVal,
+                    classBreakInfos: createClassBreakInfos(maxVal, SimpleFillSymbol, Color)  // Dynamically create class breaks based on max value
+                });
+
+                // Return a new ImageryTileLayer with the specified renderer and band ID
+                const layer = new ImageryTileLayer({
+                    url: "https://pathfinder.arcc.uwyo.edu/tncwebsite/LoMoData/LoMoRasters.tif",
+                    id: "climateLayer",
+                    bandIds: [bandId],
+                    renderer: renderer
+                });
+
+                return layer;
+            }
+            // Generate class breaks with colors for the renderer
+            function createClassBreakInfos(maxVal, SimpleFillSymbol, Color) {
+                const breaks = [
+                    { threshold: 0, color: [0, 0, 0, 0], label: "No data" },
+                    // Additional thresholds for various data ranges with specific colors and labels
+                    { threshold: 0.1, color: [255, 179, 186, .5], label: "Very Low" },
+                    { threshold: 0.2, color: [255, 223, 186, .5], label: "Low" },
+                    { threshold: 0.3, color: [255, 255, 186, .5], label: "Medium Low" },
+                    { threshold: 0.4, color: [186, 255, 201, .5], label: "Medium" },
+                    { threshold: 0.5, color: [186, 225, 255, .5], label: "Medium High" },
+                    { threshold: 0.6, color: [186, 135, 255, .5], label: "High" },
+                    { threshold: 0.7, color: [221, 186, 255, .5], label: "Very High" },
+                    { threshold: 0.8, color: [255, 186, 255, .5], label: "Extremely High" },
+                    { threshold: 1.0, color: [255, 136, 255, .5], label: "Maximum" }
+                ];
+
+                // Map each break to a configuration for the renderer
+                return breaks.map(b => ({
+                    minValue: b.threshold === 0 ? 0 : maxVal * (b.threshold - 0.1) + 1,
+                    maxValue: maxVal * b.threshold,
+                    symbol: new SimpleFillSymbol({
+                        color: new Color([...b.color, 255])  // Convert color array to Color object
+                    }),
+                    label: `${b.label} (${Math.round(maxVal * (b.threshold - 0.1) + 1)} - ${Math.round(maxVal * b.threshold)})`
+                }));
+            }
+
+            // Function to load GeoJSON layer with specific rendering for the river centerline
+            async function loadGeoJSONLayer(GeoJSONLayer) {
+                const url = "https://pathfinder.arcc.uwyo.edu/tncwebsite/LoMoData/LoMoRiver.geojson";
+
+                // Define the GeoJSON layer with a simple line renderer for visibility
+                const layer = new GeoJSONLayer({
+                    url: url,
+                    title: "River Centerline",
+                    renderer: {
+                        type: "simple",
+                        symbol: {
+                            type: "simple-line",
+                            color: [0, 117, 255, 0.8],
+                            width: "3px",
+                            style: "solid"
+                        }
+                    },
+                    popupTemplate: {
+                        title: "River Centerline",
+                        content: [{
+                            type: "fields",
+                            fieldInfos: [
+                                { fieldName: "id", label: "River ID", visible: true }
+                            ]
+                        }]
+                    }
+                });
+
+                return layer;
+            }
+            async function updateLegend(layer) {
+                window.legend.layerInfos = [{
+                    layer: layer,
+                    title: "Raster Layer"
+                }];
+            }
+            async function initializeWidgets(map) {
+                // Dynamically load ESRI modules needed for the application
+                const [Legend, ScaleBar, Compass, BasemapGallery, Expand] = await loadEsriModules([
+                    "esri/widgets/Legend",
+                    "esri/widgets/ScaleBar",
+                    "esri/widgets/Compass",
+                    "esri/widgets/BasemapGallery",
+                    "esri/widgets/Expand",
+                ]);
+                // Initialize the Legend
+                window.legend = new Legend({
+                    view: view,
+                    layerInfos: [{
+                        layer: rasterLayer,
+                        title: "Raster Layer" // Optionally customize the title
+                    }, {
+                        layer: featureLayer,
+                        title: "River Centerline"
+                    }]
+                });
+                let scaleBar = new ScaleBar({
+                    view: view,
+                    unit: "dual" // The scale bar displays both metric and imperial units.
+                });
+                // Add widget to the bottom left corner of the view
+                view.ui.add(scaleBar, {
+                    position: "bottom-left"
+                });
+                // Add the legend to the view
+                view.ui.add(legend, "bottom-right"); // You can specify other positions like "top-right", "top-left", etc.
+
+                const compassWidget = new Compass({
+                    view: view
+                });
+
+                // Add the Compass widget to the top left corner of the view
+                view.ui.add(compassWidget, "top-left");
+
+                // Initially call the function to set the correct legend state
+
+                const basemapGallery = new BasemapGallery({
+                    view: view,
+                    container: document.createElement("div")
+
+                });
+                const bgExpand = new Expand({
+                    view: view,
+                    content: basemapGallery,
+                    mode: "floating"
+                });
+
+                //close the expand whenever a basemap is selected
+                basemapGallery.watch("activeBasemap",
+                    () => {
+                        bgExpand.collapse();
+                    });
+
+                // Add the expand instance to the ui
+                view.ui.add(bgExpand, "top-right");
+            }
+
+        }
+
+        // Helper function to load ESRI modules using the ArcGIS API
+        async function loadEsriModules(modules) {
+            return new Promise((resolve) => {
+                require(modules, (...loadedModules) => {
+                    resolve(loadedModules);
+                });
+            });
+        }
+
+        // Call the initialization function to set up the map
+        initializeMap();
+    </script>
+
+    <script src="scripts/js/app.js" async type="module"></script>
+</body>
+
+</html>
